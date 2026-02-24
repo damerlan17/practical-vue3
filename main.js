@@ -48,6 +48,12 @@ const app = createApp({
             card.col = targetCol;
             this.updateTimestamp(card);
         },
+
+        deleteCard(card) {
+            if (card.col === 1) {
+                this.cards = this.cards.filter(c => c.id !== card.id);
+            }
+        }
     },
     template: `
         <div>
@@ -68,12 +74,12 @@ const app = createApp({
                             <button v-if="card.col === 1" @click="moveCard(card, 2)" class="primary">В работу</button>
                             <button v-if="card.col === 2" @click="moveCard(card, 3)" class="primary">Тестирование</button>
                             <button v-if="card.col === 3" @click="moveCard(card, 4)" class="primary">Выполнено</button>
+                            <button v-if="card.col === 1" @click="deleteCard(card)" class="danger">Удалить</button>
                         </div>
                     </div>
                     
-                    <button v-if="col.id === 1" @click="createCard" class="primary" style="width:100%;">
-                        + Создать карточку
-                    </button>
+                    <button v-if="col.id === 1" @click="createCard" class="primary" style="width:100%;">+ Создать карточку</button>
+                    
                 </div>
             </div>
         </div>
