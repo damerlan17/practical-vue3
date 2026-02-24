@@ -39,3 +39,32 @@ h1 {
     color: #172b4d;
     margin-bottom: 1rem;
 }
+
+.card {
+    background: white;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+}
+button {
+    background: #091e420a;
+    border: none;
+    border-radius: 6px;
+    padding: 0.4rem 0.8rem;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: #172b4d;
+    cursor: pointer;
+    transition: 0.1s;
+}
+button:hover {
+    background: #091e4224;
+}
+button.primary {
+    background: #0079bf;
+    color: white;
+}
+button.primary:hover {
+    background: #026aa7;
+}
