@@ -38,10 +38,10 @@ const app = createApp({
     data() {
         return {
             columns: [
-                { id: 1, title: '📌 Запланированные' },
-                { id: 2, title: '⚙️ В работе' },
-                { id: 3, title: '🧪 Тестирование' },
-                { id: 4, title: '✅ Выполненные' }
+                { id: 1, title: 'Запланированные' },
+                { id: 2, title: 'В работе' },
+                { id: 3, title: 'Тестирование' },
+                { id: 4, title: 'Выполненные' }
             ],
             cards: [
                 {
@@ -84,6 +84,10 @@ const app = createApp({
             return new Date(iso).toLocaleString();
         },
         moveCard(card, targetCol) {
+            if (targetCol === 4) {
+                const today = new Date().toISOString().slice(0,10);
+                card.status = card.deadline < today ? 'overdue' : 'ontime';
+            }
             card.col = targetCol;
             this.updateTimestamp(card);
         },
@@ -113,7 +117,7 @@ const app = createApp({
             <div class="board">
                 <div v-for="col in columns" :key="col.id" class="column">
                     <h2>{{ col.title }}</h2>
-                    <div v-for="card in cards.filter(c => c.col === col.id)" :key="card.id" class="card">
+                    <div v-for="card in cards.filter(c => c.col === col.id)" :key="card.id" class="card" :class="card.status || ''">
                         <input v-model="card.title" @blur="updateTimestamp(card)" placeholder="Заголовок" />
                         <textarea v-model="card.description" @blur="updateTimestamp(card)" placeholder="Описание"></textarea>
                         <label>Дедлайн</label>
@@ -122,6 +126,9 @@ const app = createApp({
                             <div>Создано: {{ formatDate(card.createdAt) }}</div>
                             <div>Изменено: {{ formatDate(card.updatedAt) }}</div>
                             <div v-if="card.returnReason" style="color:#bf2600;">Возврат: {{ card.returnReason }}</div>
+                            <div v-if="card.col === 4" class="card-meta">
+                                Статус: <strong>{{ card.status === 'overdue' ? 'Просрочена' : 'Выполнена в срок' }}</strong>
+                            </div>
                         </div>
                         <div class="card-actions">
                             <button v-if="card.col === 1" @click="moveCard(card, 2)" class="primary">→ В работу</button>
@@ -129,6 +136,7 @@ const app = createApp({
                             <button v-if="card.col === 3" @click="moveCard(card, 4)" class="primary">✓ Выполнено</button>
                             <button v-if="card.col === 3" @click="openReturnModal(card)">↩ Вернуть в работу</button>
                             <button v-if="card.col === 1" @click="deleteCard(card)" class="danger">Удалить</button>
+                            
                         </div>
                     </div>
                     <button v-if="col.id === 1" @click="createCard" class="primary" style="width:100%;">
