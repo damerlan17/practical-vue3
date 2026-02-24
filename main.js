@@ -42,7 +42,12 @@ const app = createApp({
         formatDate(iso) {
             if (!iso) return '—';
             return new Date(iso).toLocaleString();
-        }
+        },
+
+        moveCard(card, targetCol) {
+            card.col = targetCol;
+            this.updateTimestamp(card);
+        },
     },
     template: `
         <div>
@@ -59,7 +64,13 @@ const app = createApp({
                             <div>Создано: {{ formatDate(card.createdAt) }}</div>
                             <div>Изменено: {{ formatDate(card.updatedAt) }}</div>
                         </div>
+                        <div class="card-actions">
+                            <button v-if="card.col === 1" @click="moveCard(card, 2)" class="primary">В работу</button>
+                            <button v-if="card.col === 2" @click="moveCard(card, 3)" class="primary">Тестирование</button>
+                            <button v-if="card.col === 3" @click="moveCard(card, 4)" class="primary">Выполнено</button>
+                        </div>
                     </div>
+                    
                     <button v-if="col.id === 1" @click="createCard" class="primary" style="width:100%;">
                         + Создать карточку
                     </button>
