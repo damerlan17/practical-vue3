@@ -204,28 +204,28 @@ const app = createApp({
                         <input type="date" v-model="card.deadline" @blur="updateTimestamp(card)" />
                         <div class="checklist">
                             <div v-for="item in card.checklist" :key="item.id" class="checklist-item">
-                                    <input
-                                        type="checkbox"
-                                        :checked="item.completed"
-                                        @change="toggleChecklistItem(card, item.id)"
-                                    />
-                                    <input
-                                            type="text"
-                                            :value="item.text"
-                                            @blur="e => updateChecklistItemText(card, item.id, e.target.value)"
-                                            placeholder="Действие"
-                                    />
-                                    <button @click="removeChecklistItem(card, item.id)" class="small danger" title="Удалить пункт">✕</button>
-                                    </div>
-                                    <button
-                                            v-if="card.checklist.length < 3"
-                                            @click="addChecklistItem(card)"
-                                            class="small primary"
-                                    >
-                                        + Добавить пункт
-                                    </button>
-                                </div>
+                                <input
+                                    type="checkbox"
+                                    :checked="item.completed"
+                                    @change="toggleChecklistItem(card, item.id)"
+                                />
+                                <input
+                                        type="text"
+                                        :value="item.text"
+                                        @blur="e => updateChecklistItemText(card, item.id, e.target.value)"
+                                        placeholder="Действие"
+                                />
+                                <button @click="removeChecklistItem(card, item.id)" class="small danger" title="Удалить пункт">✕</button>
                             </div>
+                                <button
+                                        v-if="card.checklist.length < 3"
+                                        @click="addChecklistItem(card)"
+                                        class="small primary"
+                                >
+                                    + Добавить пункт
+                                </button>
+                        </div>
+                            
                         <div class="card-meta">
                             <div>Создано: {{ formatDate(card.createdAt) }}</div>
                             <div>Изменено: {{ formatDate(card.updatedAt) }}</div>
