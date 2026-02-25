@@ -1,6 +1,5 @@
 const { createApp } = Vue;
 
-// Компонент модального окна
 const ReturnModal = {
     props: ['show', 'card'],
     emits: ['close', 'confirm'],
@@ -52,14 +51,37 @@ const app = createApp({
                     createdAt: new Date().toISOString(),
                     updatedAt: new Date().toISOString(),
                     col: 1,
-                    returnReason: null
+                    returnReason: null,
+                    status: null
                 }
             ],
             returnModal: {
                 show: false,
                 card: null
-            }
+            },
+            searchQuery: ''
         };
+    },
+    computed: {
+        filteredCards() {
+            if (!this.searchQuery.trim()) return this.cards;
+            const q = this.searchQuery.trim().toLowerCase();
+            return this.cards.filter(c => c.title.toLowerCase().includes(q));
+        }
+    },
+    watch: {
+        cards: {
+            handler() {
+                localStorage.setItem('kanban-cards', JSON.stringify(this.cards));
+            },
+            deep: true
+        }
+    },
+    mounted() {
+        const saved = localStorage.getItem('kanban-cards');
+        if (saved) {
+            this.cards = JSON.parse(saved);
+        }
     },
     methods: {
         createCard() {
@@ -72,7 +94,8 @@ const app = createApp({
                 createdAt: now,
                 updatedAt: now,
                 col: 1,
-                returnReason: null
+                returnReason: null,
+                status: null
             };
             this.cards.push(newCard);
         },
@@ -113,11 +136,12 @@ const app = createApp({
     },
     template: `
         <div>
-            <h1>📋 Kanban доска</h1>
+            <h1>Kanban доска</h1>
+            <input v-model="searchQuery" class="search-input" placeholder="Поиск по заголовку..." />
             <div class="board">
                 <div v-for="col in columns" :key="col.id" class="column">
                     <h2>{{ col.title }}</h2>
-                    <div v-for="card in cards.filter(c => c.col === col.id)" :key="card.id" class="card" :class="card.status || ''">
+                    <div v-for="card in filteredCards.filter(c => c.col === col.id)" :key="card.id" class="card" :class="card.status || ''">
                         <input v-model="card.title" @blur="updateTimestamp(card)" placeholder="Заголовок" />
                         <textarea v-model="card.description" @blur="updateTimestamp(card)" placeholder="Описание"></textarea>
                         <label>Дедлайн</label>
@@ -126,7 +150,7 @@ const app = createApp({
                             <div>Создано: {{ formatDate(card.createdAt) }}</div>
                             <div>Изменено: {{ formatDate(card.updatedAt) }}</div>
                             <div v-if="card.returnReason" style="color:#bf2600;">Возврат: {{ card.returnReason }}</div>
-                            <div v-if="card.col === 4" class="card-meta">
+                            <div v-if="card.col === 4">
                                 Статус: <strong>{{ card.status === 'overdue' ? 'Просрочена' : 'Выполнена в срок' }}</strong>
                             </div>
                         </div>
@@ -136,7 +160,6 @@ const app = createApp({
                             <button v-if="card.col === 3" @click="moveCard(card, 4)" class="primary">✓ Выполнено</button>
                             <button v-if="card.col === 3" @click="openReturnModal(card)">↩ Вернуть в работу</button>
                             <button v-if="card.col === 1" @click="deleteCard(card)" class="danger">Удалить</button>
-                            
                         </div>
                     </div>
                     <button v-if="col.id === 1" @click="createCard" class="primary" style="width:100%;">
