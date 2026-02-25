@@ -52,7 +52,8 @@ const app = createApp({
                     updatedAt: new Date().toISOString(),
                     col: 1,
                     returnReason: null,
-                    status: null
+                    status: null,
+                    checklist: []
                 }
             ],
             returnModal: {
@@ -80,7 +81,11 @@ const app = createApp({
     mounted() {
         const saved = localStorage.getItem('kanban-cards');
         if (saved) {
-            this.cards = JSON.parse(saved);
+            // При загрузке из localStorage добавляем поле checklist, если его нет
+            this.cards = JSON.parse(saved).map(card => ({
+                ...card,
+                checklist: card.checklist || []   // <-- добавляем пустой массив, если отсутствует
+            }));
         }
     },
     methods: {
@@ -95,7 +100,8 @@ const app = createApp({
                 updatedAt: now,
                 col: 1,
                 returnReason: null,
-                status: null
+                status: null,
+                checklist: []
             };
             this.cards.push(newCard);
         },
@@ -107,6 +113,18 @@ const app = createApp({
             return new Date(iso).toLocaleString();
         },
         moveCard(card, targetCol) {
+            if (targetCol === 4) {
+                const today = new Date().toISOString().slice(0,10);
+                card.status = card.deadline < today ? 'overdue' : 'ontime';
+            }
+            card.col = targetCol;
+            this.updateTimestamp(card);
+
+            if (targetCol === 4 && !this.isChecklistComplete(card)) {
+                alert('Сначала выполните все пункты чек-листа');
+                return;
+            }
+
             if (targetCol === 4) {
                 const today = new Date().toISOString().slice(0,10);
                 card.status = card.deadline < today ? 'overdue' : 'ontime';
@@ -132,7 +150,45 @@ const app = createApp({
             }
             this.returnModal.show = false;
             this.returnModal.card = null;
-        }
+        },
+
+        addChecklistItem(card) {
+            if (card.checklist.length >= 3) return;
+            const newItem = {
+                id: Date.now() + Math.random(),
+                text: '',
+                completed: false
+            };
+            card.checklist.push(newItem);
+            this.updateTimestamp(card);
+        },
+
+        updateChecklistItemText(card, itemId, newText) {
+            const item = card.checklist.find(i => i.id === itemId);
+            if (item) {
+                item.text = newText;
+                this.updateTimestamp(card);
+            }
+        },
+
+        isChecklistComplete(card) {
+            return !card.checklist || card.checklist.length === 0 || card.checklist.every(item => item.completed);
+        },
+
+        toggleChecklistItem(card, itemId) {
+            const item = card.checklist.find(i => i.id === itemId);
+            if (item) {
+                item.completed = !item.completed;
+                this.updateTimestamp(card);
+            }
+        },
+
+
+        removeChecklistItem(card, itemId) {
+            card.checklist = card.checklist.filter(item => item.id !== itemId);
+            this.updateTimestamp(card);
+        },
+
     },
     template: `
         <div>
@@ -146,6 +202,30 @@ const app = createApp({
                         <textarea v-model="card.description" @blur="updateTimestamp(card)" placeholder="Описание"></textarea>
                         <label>Дедлайн</label>
                         <input type="date" v-model="card.deadline" @blur="updateTimestamp(card)" />
+                        <div class="checklist">
+                            <div v-for="item in card.checklist" :key="item.id" class="checklist-item">
+                                    <input
+                                        type="checkbox"
+                                        :checked="item.completed"
+                                        @change="toggleChecklistItem(card, item.id)"
+                                    />
+                                    <input
+                                            type="text"
+                                            :value="item.text"
+                                            @blur="e => updateChecklistItemText(card, item.id, e.target.value)"
+                                            placeholder="Действие"
+                                    />
+                                    <button @click="removeChecklistItem(card, item.id)" class="small danger" title="Удалить пункт">✕</button>
+                                    </div>
+                                    <button
+                                            v-if="card.checklist.length < 3"
+                                            @click="addChecklistItem(card)"
+                                            class="small primary"
+                                    >
+                                        + Добавить пункт
+                                    </button>
+                                </div>
+                            </div>
                         <div class="card-meta">
                             <div>Создано: {{ formatDate(card.createdAt) }}</div>
                             <div>Изменено: {{ formatDate(card.updatedAt) }}</div>
@@ -157,7 +237,7 @@ const app = createApp({
                         <div class="card-actions">
                             <button v-if="card.col === 1" @click="moveCard(card, 2)" class="primary">→ В работу</button>
                             <button v-if="card.col === 2" @click="moveCard(card, 3)" class="primary">→ Тестирование</button>
-                            <button v-if="card.col === 3" @click="moveCard(card, 4)" class="primary">✓ Выполнено</button>
+                            <button v-if="card.col === 3" @click="moveCard(card, 4)" class="primary" :disabled="!isChecklistComplete(card)">✓ Выполнено</button>
                             <button v-if="card.col === 3" @click="openReturnModal(card)">↩ Вернуть в работу</button>
                             <button v-if="card.col === 1" @click="deleteCard(card)" class="danger">Удалить</button>
                         </div>
